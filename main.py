@@ -4,7 +4,7 @@ from DataStructure import DLinkedList
 import macro_functions as macro
 
 
-class windows(tk.Tk):
+class Windows(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         # Adding a title to the window
@@ -161,7 +161,6 @@ class MousePage(tk.Frame):
         self.overview.new_macro(name)
 
 
-
 class KeyboardPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -184,5 +183,5 @@ class ComboPage(tk.Frame):
 
 if __name__ == "__main__":
     macro.setup_listeners()
-    testObj = windows()
+    testObj = Windows()
     testObj.mainloop()

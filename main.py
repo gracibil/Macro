@@ -66,7 +66,7 @@ class OverviewFrame(ttk.Frame):
         self.row = 1
         self.item_list = DLinkedList()
         self.data_list.append(self.item_list)
-        canvas = tk.Canvas(self,bg="blue",height=400, width=600)
+        canvas = tk.Canvas(self,bg="white",height=400, width=600)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         self.scrollable_frame = ttk.Frame(canvas)
 
@@ -157,18 +157,38 @@ class MousePage(tk.Frame):
             pass
 
     def save_macro(self, name):
-        macro.end_record()
+        macro.end_record_mouse()
         self.overview.new_macro(name)
 
 
 class KeyboardPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="This is the Side Page")
-        label.pack(padx=10, pady=10)
+        self.var = tk.BooleanVar
+        new_btn = tk.Button(self, text='New Macro', padx=5, pady=5)
+        name_box = tk.Entry(self)
+        name_box.insert(0, "Macro name")
+        time_chck = tk.Checkbutton(self, text="Time sensitive?", variable=self.var)
+        record_btn = tk.Button(self, text="Record (F5)", padx=10, pady=10,
+                               command=lambda: macro.create_file(name_box.get()))
+        save_btn = tk.Button(self, text="Save (F6)", padx=10, pady=10, command=lambda : self.save_macro(name_box.get()))
+        overview_label = tk.Label(self, text='My Macros')
 
-        overview = OverviewFrame(self, controller)
-        overview.pack()
+        new_btn.grid(row=0, column=1)
+        name_box.grid(row=1, column=0)
+        time_chck.grid(row=1, column=1)
+        record_btn.grid(row=1, column=2)
+        save_btn.grid(row=1, column=3)
+        overview_label.grid(row=2, column=1)
+
+        self.overview = OverviewFrame(self, controller)
+        self.overview.grid(row=3, column=0, columnspan=4)
+
+    def save_macro(self, name):
+        macro.end_record_mouse()
+        self.overview.new_macro(name)
+
+
 
 
 class ComboPage(tk.Frame):

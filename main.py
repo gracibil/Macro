@@ -16,33 +16,30 @@ key_dir = (root/'Keyboard Macros')
 combo_dir = (root/'Combo Macros')
 
 
-
 class Windows(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        # Adding a title to the window
+
         self.wm_title("Macro")
 
-        # creating a frame and assigning it to container
+
         container = tk.Frame(self, height=500, width=300)
         toolbar = Toolbar(container,self)
-        # specifying the region where the frame is packed in root
+
         toolbar.grid(row=0,column=0,sticky='n')
 
         container.pack(side="top", fill="both", expand=False)
 
 
-        # configuring the location of the container using grid
+
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        # We will now create a dictionary of frames
         self.frames = {}
-        # we'll create the frames themselves later but let's add the components to the dictionary.
         for F in (MousePage, KeyboardPage, ComboPage):
             frame = F(container, self)
 
-            # the windows class acts as the root window for the frames.
+
             self.frames[F] = frame
             frame.grid(row=1, column=0, sticky="nsew")
 

@@ -3,20 +3,24 @@ from pynput.mouse import Button, Controller
 import time
 import csv
 import ctypes
-from main import get_project_root
+import git
 from pathlib import Path
 
-PROCESS_PER_MONITOR_DPI_AWARE = 2
 
+
+def get_project_root():
+    return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+
+PROCESS_PER_MONITOR_DPI_AWARE = 2
 ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
 
-root = get_project_root()
 file_name = ''
 toggle_listen_mouse = False
 toggle_listen_keyboard = False
 toggle_timeing = False
 action_time = 0
 
+root = get_project_root()
 mouse_dir = (root / 'Mouse Macros')
 key_dir = (root/'Keyboard Macros')
 combo_dir = (root/'Combo Macros')
@@ -33,7 +37,7 @@ def detect_key():
     listener.start()
 
 
-def on_click(x, y, button, pressed):
+def on_click(x, y, button, pressed): #procceses mouse clicks
     global toggle_listen_mouse
     if toggle_listen_mouse is True and toggle_listen_keyboard:
         if pressed:
@@ -50,11 +54,23 @@ def on_click(x, y, button, pressed):
             write_to_file_mouse(x, y, button, pressed, mouse_dir, get_time())
 
     else:
-        print('listener is off')
+        pass
 
 
-def on_press(key):
-    if toggle_listen_keyboard:
+def on_press(key): #processes keybooard presses
+    global toggle_listen_keyboard, toggle_listen_mouse
+    if toggle_listen_keyboard and toggle_listen_mouse:
+          try:
+                print('alphanumeric key {0} pressed'.format(
+                       key.char))
+                write_to_file_key(key.char, get_time(), combo_dir)
+
+          except AttributeError:
+                if key == keyboard.Key.f6:
+                     print('special key {0} pressed'.format(
+                            key))
+                     return end_record()
+    elif toggle_listen_keyboard:
           try:
                 print('alphanumeric key {0} pressed'.format(
                        key.char))
@@ -65,19 +81,14 @@ def on_press(key):
                      print('special key {0} pressed'.format(
                             key))
                      return end_record()
-
     else:
-        print('listener is off')
+        if key == keyboard.Key.f5:
+            print('f5 pressed')
 
 
 def setup_listeners():
     detect_mouse()
     detect_key()
-
-
-def terminate_listener():
-    global toggle_listen_mouse
-    toggle_listen_mouse = False
 
 
 def create_file(name, timeing=False, mouse=False, keyboard=False ):
@@ -103,13 +114,11 @@ def write_to_file_mouse(x, y, button, state, directory, time):
     file = (directory/file_name)
     if toggle_timeing:
         with open(file, 'a', newline='') as f:
-            print(x, y, button, state)
             row = '0,{0},{1},{2},{3},{4}'.format(x, y, button, state,time)
             writer = csv.writer(f, quoting = csv.QUOTE_NONE, delimiter =' ')
             writer.writerow(row.split())
     else:
         with open(file, 'a', newline='') as f:
-            print(x, y, button, state)
             row = '0,{0},{1},{2},{3},{4}'.format(x, y, button, state,0.5)
             writer = csv.writer(f, quoting = csv.QUOTE_NONE, delimiter =' ')
             writer.writerow(row.split())
@@ -130,12 +139,11 @@ def write_to_file_key(key, time, directory):
 
 
 def end_record():
-    global toggle_listen_mouse
-    global toggle_listen_keyboard
-    global toggle_timeing
+    global toggle_listen_mouse, toggle_listen_keyboard, toggle_timeing
     toggle_listen_mouse = False
     toggle_listen_keyboard = False
     toggle_timeing = False
+
 
 
 def convert_macro_text(macro_name, directory):
@@ -145,17 +153,13 @@ def convert_macro_text(macro_name, directory):
         reader = csv.reader(file)
 
         for row in reader:
-            play_mouse_macro(row)
-
-    pass
+            play_macro(row)
 
 
-def play_mouse_macro(row):
+def play_macro(row):
     control = Controller()
     key_control = keyboard.Controller()
-    print(row[0])
     if row[0] == '0':
-        print(row[0])
         x = row[1]
         y= row[2]
         button = row[3]
@@ -165,21 +169,17 @@ def play_mouse_macro(row):
         time.sleep(sleep_time)
         if button == 'Button.left' and action:
             control.press(Button.left)
-            print(button, action)
         elif button == 'Button.left' and not action:
             control.release(Button.left)
-            print(button,action)
         elif button == 'Button.right' and action:
             control.press(Button.right)
-            print(button,action)
         elif button == 'Button.right' and not action:
              control.release(Button.right)
-             print(button,action)
+
     elif row[0] == '1':
         key = row[1]
         sleep_time = float(row[2])
         key_control.press(key)
-        print(key)
         time.sleep(sleep_time)
 
 
@@ -192,5 +192,4 @@ def get_time():
     current_time = time.time()
     new_action = current_time-action_time
     action_time = current_time
-    print (round(new_action,2))
     return round(new_action, 2)

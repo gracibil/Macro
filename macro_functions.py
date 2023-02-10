@@ -69,18 +69,15 @@ def on_press(key): #processes keybooard presses
                 if key == keyboard.Key.f6:
                      print('special key {0} pressed'.format(
                             key))
-                     return end_record()
+
     elif toggle_listen_keyboard:
           try:
-                print('alphanumeric key {0} pressed'.format(
-                       key.char))
                 write_to_file_key(key.char, get_time(), key_dir)
 
           except AttributeError:
                 if key == keyboard.Key.f6:
-                     print('special key {0} pressed'.format(
-                            key))
-                     return end_record()
+                    pass
+
     else:
         if key == keyboard.Key.f5:
             print('f5 pressed')
@@ -91,17 +88,21 @@ def setup_listeners():
     detect_key()
 
 
-def create_file(name, timeing=False, mouse=False, keyboard=False ):
+def create_file(name,directory, timeing=False, mouse=False, keyboard=False ):
     global file_name
     global toggle_listen_mouse
     global toggle_listen_keyboard
     global toggle_timeing
     global action_time
-    action_time = time.time()
-    toggle_listen_mouse = mouse
-    toggle_listen_keyboard = keyboard
-    toggle_timeing = timeing
-    file_name = '{0}.csv'.format(name)
+    if same_file_check(name, directory):
+        print('same file exists!')
+        return True
+    else:
+        action_time = time.time()
+        toggle_listen_mouse = mouse
+        toggle_listen_keyboard = keyboard
+        toggle_timeing = timeing
+        file_name = '{0}.csv'.format(name)
 
 
 def delete_file(f_name, directory):
@@ -138,12 +139,15 @@ def write_to_file_key(key, time, directory):
             writer.writerow(row.split())
 
 
-def end_record():
+def end_record(file_name, directory):
     global toggle_listen_mouse, toggle_listen_keyboard, toggle_timeing
     toggle_listen_mouse = False
     toggle_listen_keyboard = False
     toggle_timeing = False
-
+    if same_file_check(file_name, directory):
+        return True
+    else:
+        return False
 
 
 def convert_macro_text(macro_name, directory):
@@ -183,8 +187,14 @@ def play_macro(row):
         time.sleep(sleep_time)
 
 
-def play_keyboard_macro():
-    pass
+def same_file_check(macro_name, directory):
+    file_name = '{0}.csv'.format(macro_name)
+    file = (directory / file_name)
+    for i in Path.glob(directory, '*.csv'):
+        if i == file:
+            print(i)
+            return True
+    return False
 
 
 def get_time():

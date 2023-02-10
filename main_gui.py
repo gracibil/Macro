@@ -39,8 +39,13 @@ class Windows(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
-        Windows.active_frame = frame
+        self.unbind_f()
+        Windows.active_frame = frame.get_frame_status()
         print(Windows.active_frame)
+
+    def unbind_f(self):
+        self.unbind_all('<F5>')
+        self.unbind_all('<F6>')
 
 
 class Toolbar(tk.Frame):  # The toolbar holds all the buttons and their functions
@@ -133,9 +138,11 @@ class OverviewFrame(ttk.Frame):
 class MousePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.parent = parent
+        self.controller = controller
         self.var = tk.BooleanVar(self)
         self.directory = mouse_dir
+        self.f5_allowed = True
+        self.f6_allowed = False
 
         new_btn = tk.Button(self, text='New Macro',padx=5,pady=5, command=self.new_macro_press)
         self.name_box = tk.Entry(self)
@@ -144,7 +151,7 @@ class MousePage(tk.Frame):
         self.record_btn = tk.Button(self, text="Record (F5)",padx=10,pady=10,
                                     command=self.record_button_press)
         self.save_btn = tk.Button(self, text="Save (F6)",padx=10,pady=10,
-                                  command=lambda : self.save_macro(self.name_box.get()))
+                                  command=lambda : self.save_macro_press(self.name_box.get()))
         overview_label = tk.Label(self, text='My Macros')
 
         self.save_btn.configure(state='disabled')
@@ -158,21 +165,28 @@ class MousePage(tk.Frame):
 
         self.overview = OverviewFrame(self,controller, mouse_dir)
         self.overview.grid(row=3,column=0,columnspan=4)
-        parent.bind('<F5>', self.record_button_press)
-        parent.bind('<F6>', lambda x : self.save_macro(self.name_box.get()))
+
 
     def record_button_press(self, event=None):
+        if macro.create_file(self.name_box.get(),self.directory ,mouse=True, timeing=self.var.get()):
+            print('same file exists!')
+        else:
             self.save_btn.config(state='normal')
             self.record_btn.config(state='disabled')
-            macro.create_file(self.name_box.get(), mouse=True, timeing=self.var.get())
             self.name_box.config(state='disabled')
+            self.f6_allowed = True
+            self.f5_allowed = False
 
-    def save_macro(self, name, event=None):
-        macro.end_record()
+
+    def save_macro_press(self, name, event=None):
+        if macro.end_record(name, self.directory):
+            self.overview.new_macro(name)
+        else:
+            print('empty file!')
         self.record_btn.config(state='normal')
-        self.save_btn.config(state='normal')
-        self.overview.new_macro(name)
         self.new_macro_press()
+        self.f5_allowed = True
+        self.f6_allowed = False
 
     def new_macro_press(self):
         self.name_box.config(state='normal')
@@ -181,16 +195,33 @@ class MousePage(tk.Frame):
         self.name_box.delete(0, tk.END)
         self.name_box.insert(0,'New Macro')
 
+    def get_frame_status(self):
+        self.controller.bind('<F5>', self.f5_key_press)
+        self.controller.bind('<F6>', lambda x : self.f6_key_press(self.name_box.get()))
+        return 0
 
+    def f5_key_press(self, event=None):
+        if self.controller.active_frame == 0 and self.f5_allowed:
+            self.record_button_press()
+        else:
+            pass
 
-
+    def f6_key_press(self, name, event=None):
+        if self.controller.active_frame == 0 and self.f6_allowed:
+            self.save_macro_press(name)
+        else:
+            pass
 
 
 class KeyboardPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.directory = key_dir
+        self.controller = controller
         self.var = tk.BooleanVar(self)
+        self.f5_allowed = True
+        self.f6_allowed = False
+
         new_btn = tk.Button(self, text='New Macro', padx=5, pady=5, command= self.new_macro_press)
         self.name_box = tk.Entry(self)
         self.name_box.insert(0, "Macro name")
@@ -199,7 +230,7 @@ class KeyboardPage(tk.Frame):
                                     command=self.record_button_press)
 
         self.save_btn = tk.Button(self, text="Save (F6)", padx=10, pady=10,
-                                  command=lambda : self.save_macro(self.name_box.get()))
+                                  command=lambda : self.save_macro_press(self.name_box.get()))
         overview_label = tk.Label(self, text='My Macros')
 
         self.save_btn.config(state='disabled')
@@ -213,39 +244,62 @@ class KeyboardPage(tk.Frame):
 
         self.overview = OverviewFrame(self, controller, key_dir)
         self.overview.grid(row=3, column=0, columnspan=4)
-        #controller.bind('<F5>', self.record_button_press)
-        #controller.bind('<F6>', lambda x: self.save_macro(self.name_box.get()))
+
 
     def record_button_press(self, event=None):
+        if macro.create_file(self.name_box.get(),self.directory ,keyboard=True, timeing=self.var.get()):
+            print('same file exists!')
+        else:
             self.save_btn.config(state='normal')
             self.record_btn.config(state='disabled')
-            macro.create_file(self.name_box.get(), keyboard=True, timeing=self.var.get())
             self.name_box.config(state='disabled')
+            self.f6_allowed = True
+            self.f5_allowed = False
 
-    def save_macro(self, name):
-        macro.end_record()
+
+    def save_macro_press(self, name, event=None):
+        if macro.end_record(name, self.directory):
+            self.overview.new_macro(name)
+        else:
+            print('empty file!')
         self.record_btn.config(state='normal')
-        self.save_btn.config(state='normal')
-        self.overview.new_macro(name)
         self.new_macro_press()
+        self.f5_allowed = True
+        self.f6_allowed = False
 
     def new_macro_press(self):
         self.name_box.config(state='normal')
-        self.save_btn.config(state='normal')
+        self.save_btn.config(state='disable')
         self.record_btn.config(state='normal')
         self.name_box.delete(0, tk.END)
         self.name_box.insert(0,'New Macro')
 
-    def disable_frame(self):
-        for child in self.winfo_children():
-            print(child)
+    def get_frame_status(self):
+        self.controller.bind('<F5>', self.f5_key_press)
+        self.controller.bind('<F6>', lambda x : self.f6_key_press(self.name_box.get()))
+        return 1
 
+    def f5_key_press(self, event=None):
+        if self.controller.active_frame == 1 and self.f5_allowed:
+            self.record_button_press()
+        else:
+            pass
+
+    def f6_key_press(self, name, event=None):
+        if self.controller.active_frame == 1 and self.f6_allowed:
+            self.save_macro_press(name)
+        else:
+            pass
 
 
 class ComboPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent)
         self.var = tk.BooleanVar(self)
+        self.controller = controller
+        self.f5_allowed = True
+        self.f6_allowed = False
+        self.directory = combo_dir
 
         new_btn = tk.Button(self, text='New Macro', padx=5, pady=5, command=self.new_macro_press)
         self.name_box = tk.Entry(self)
@@ -254,10 +308,10 @@ class ComboPage(tk.Frame):
         self.record_btn = tk.Button(self, text="Record (F5)", padx=10, pady=10,
                                     command=self.record_button_press)
         self.save_btn = tk.Button(self, text="Save (F6)", padx=10, pady=10,
-                                  command=lambda: self.save_macro(self.name_box.get()))
+                                  command=lambda: self.save_macro_press(self.name_box.get()))
         overview_label = tk.Label(self, text='My Macros')
 
-        self.save_btn.configure(state='disabled')
+        self.save_btn.configure(state='disable')
 
         new_btn.grid(row=0, column=1)
         self.name_box.grid(row=1, column=0)
@@ -266,37 +320,54 @@ class ComboPage(tk.Frame):
         self.save_btn.grid(row=1, column=3)
         overview_label.grid(row=2, column=1)
 
-        self.overview = OverviewFrame(self, controller, combo_dir)
+        self.overview = OverviewFrame(self, controller, self.directory)
         self.overview.grid(row=3, column=0, columnspan=4)
-        #controller.bind('<F5>', self.record_button_press)
-        #controller.bind('<F6>', lambda x: self.save_macro(self.name_box.get()))
+
 
     def record_button_press(self, event=None):
-        self.save_btn.config(state='normal')
-        self.record_btn.config(state='disabled')
-        macro.create_file(self.name_box.get(), mouse=True, keyboard=True, timeing=self.var.get())
-        self.name_box.config(state='disabled')
+        if macro.create_file(self.name_box.get(),self.directory ,mouse=True, keyboard=True ,timeing=self.var.get()):
+            print('same file exists!')
+        else:
+            self.save_btn.config(state='normal')
+            self.record_btn.config(state='disabled')
+            self.name_box.config(state='disabled')
+            self.f6_allowed = True
+            self.f5_allowed = False
 
-    def save_macro(self, name, event=None):
-        macro.end_record()
+
+    def save_macro_press(self, name, event=None):
+        if macro.end_record(name, self.directory):
+            self.overview.new_macro(name)
+        else:
+            print('empty file!')
         self.record_btn.config(state='normal')
-        self.save_btn.config(state='normal')
-        self.overview.new_macro(name)
         self.new_macro_press()
+        self.f5_allowed = True
+        self.f6_allowed = False
 
     def new_macro_press(self):
         self.name_box.config(state='normal')
-        self.save_btn.config(state='normal')
+        self.save_btn.config(state='disable')
         self.record_btn.config(state='normal')
         self.name_box.delete(0, tk.END)
         self.name_box.insert(0, 'New Macro')
 
-    def disable_frame(self):
-        for child in self.winfo_children():
-            print(child)
+    def get_frame_status(self):
+        self.controller.bind('<F5>', self.f5_key_press)
+        self.controller.bind('<F6>', lambda x : self.f6_key_press(self.name_box.get()))
+        return 2
 
+    def f5_key_press(self, event=None):
+        if self.controller.active_frame == 2 and self.f5_allowed:
+            self.record_button_press()
+        else:
+            pass
 
-
+    def f6_key_press(self, name, event=None):
+        if self.controller.active_frame == 2 and self.f6_allowed:
+            self.save_macro_press(name)
+        else:
+            pass
 
 
 if __name__ == "__main__":

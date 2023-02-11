@@ -7,9 +7,9 @@ import git
 from pathlib import Path
 
 
-
 def get_project_root():
     return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+
 
 PROCESS_PER_MONITOR_DPI_AWARE = 2
 ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
@@ -17,7 +17,7 @@ ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
 file_name = ''
 toggle_listen_mouse = False
 toggle_listen_keyboard = False
-toggle_timeing = False
+toggle_timing = False
 action_time = 0
 
 root = get_project_root()
@@ -27,8 +27,8 @@ combo_dir = (root/'Combo Macros')
 
 
 def detect_mouse():
-    listner = mouse.Listener(on_click=on_click)
-    listner.start()
+    listener = mouse.Listener(on_click=on_click)
+    listener.start()
 
 
 def detect_key():
@@ -37,7 +37,7 @@ def detect_key():
     listener.start()
 
 
-def on_click(x, y, button, pressed): #procceses mouse clicks
+def on_click(x, y, button, pressed):  #procceses mouse clicks
     global toggle_listen_mouse
     if toggle_listen_mouse is True and toggle_listen_keyboard:
         if pressed:
@@ -57,7 +57,7 @@ def on_click(x, y, button, pressed): #procceses mouse clicks
         pass
 
 
-def on_press(key): #processes keybooard presses
+def on_press(key):  #processes keyboard presses
     global toggle_listen_keyboard, toggle_listen_mouse
     if toggle_listen_keyboard and toggle_listen_mouse:
           try:
@@ -88,11 +88,11 @@ def setup_listeners():
     detect_key()
 
 
-def create_file(name,directory, timeing=False, mouse=False, keyboard=False ):
+def create_file(name,directory, timing=False, mouse=False, keyboard=False ):
     global file_name
     global toggle_listen_mouse
     global toggle_listen_keyboard
-    global toggle_timeing
+    global toggle_timing
     global action_time
     if same_file_check(name, directory):
         print('same file exists!')
@@ -101,7 +101,7 @@ def create_file(name,directory, timeing=False, mouse=False, keyboard=False ):
         action_time = time.time()
         toggle_listen_mouse = mouse
         toggle_listen_keyboard = keyboard
-        toggle_timeing = timeing
+        toggle_timing = timing
         file_name = '{0}.csv'.format(name)
 
 
@@ -113,7 +113,7 @@ def delete_file(f_name, directory):
 
 def write_to_file_mouse(x, y, button, state, directory, time):
     file = (directory/file_name)
-    if toggle_timeing:
+    if toggle_timing:
         with open(file, 'a', newline='') as f:
             row = '0,{0},{1},{2},{3},{4}'.format(x, y, button, state,time)
             writer = csv.writer(f, quoting = csv.QUOTE_NONE, delimiter =' ')
@@ -125,11 +125,11 @@ def write_to_file_mouse(x, y, button, state, directory, time):
             writer.writerow(row.split())
 
 
-def write_to_file_key(key, time, directory):
+def write_to_file_key(key, timing, directory):
     file = (directory / file_name)
-    if toggle_timeing:
+    if toggle_timing:
         with open(file, 'a', newline='') as f:
-            row = '1,{0},{1}'.format(key,time)
+            row = '1,{0},{1}'.format(key,timing)
             writer = csv.writer(f, quoting=csv.QUOTE_NONE, delimiter=' ')
             writer.writerow(row.split())
     else:
@@ -139,22 +139,22 @@ def write_to_file_key(key, time, directory):
             writer.writerow(row.split())
 
 
-def end_record(file_name, directory):
-    global toggle_listen_mouse, toggle_listen_keyboard, toggle_timeing
+def end_record(file, directory):
+    global toggle_listen_mouse, toggle_listen_keyboard, toggle_timing
     toggle_listen_mouse = False
     toggle_listen_keyboard = False
-    toggle_timeing = False
-    if same_file_check(file_name, directory):
+    toggle_timing = False
+    if same_file_check(file, directory):
         return True
     else:
         return False
 
 
 def convert_macro_text(macro_name, directory):
-    file_name = '{0}.csv'.format(macro_name)
-    file = (directory/file_name)
-    with open(file, newline='') as file:
-        reader = csv.reader(file)
+    file = '{0}.csv'.format(macro_name)
+    file_path = (directory/file)
+    with open(file_path, newline='') as file:
+        reader = csv.reader(file_path)
 
         for row in reader:
             play_macro(row)
@@ -188,10 +188,10 @@ def play_macro(row):
 
 
 def same_file_check(macro_name, directory):
-    file_name = '{0}.csv'.format(macro_name)
-    file = (directory / file_name)
+    file = '{0}.csv'.format(macro_name)
+    file_path = (directory / file)
     for i in Path.glob(directory, '*.csv'):
-        if i == file:
+        if i == file_path:
             print(i)
             return True
     return False

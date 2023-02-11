@@ -115,7 +115,7 @@ class OverviewFrame(ttk.Frame):
 
         self.row += 1
 
-    def delete_widgets(self, item):
+    def delete_widgets(self, item): #deletes tkinter widgets from gui view
        self.delete_macro(item.cget('text'))
        print(item)
        items = self.item_list.find_item(item,1)
@@ -168,7 +168,7 @@ class MousePage(tk.Frame):
 
 
     def record_button_press(self, event=None):
-        if macro.create_file(self.name_box.get(),self.directory ,mouse=True, timeing=self.var.get()):
+        if macro.create_file(self.name_box.get(),self.directory ,mouse=True, timing=self.var.get()):
             print('same file exists!')
         else:
             self.save_btn.config(state='normal')
@@ -247,7 +247,7 @@ class KeyboardPage(tk.Frame):
 
 
     def record_button_press(self, event=None):
-        if macro.create_file(self.name_box.get(),self.directory ,keyboard=True, timeing=self.var.get()):
+        if macro.create_file(self.name_box.get(),self.directory ,keyboard=True, timing=self.var.get()):
             print('same file exists!')
         else:
             self.save_btn.config(state='normal')
@@ -325,7 +325,7 @@ class ComboPage(tk.Frame):
 
 
     def record_button_press(self, event=None):
-        if macro.create_file(self.name_box.get(),self.directory ,mouse=True, keyboard=True ,timeing=self.var.get()):
+        if macro.create_file(self.name_box.get(),self.directory ,mouse=True, keyboard=True ,timing=self.var.get()):
             print('same file exists!')
         else:
             self.save_btn.config(state='normal')
